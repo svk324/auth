@@ -8,17 +8,17 @@ import toast from "react-hot-toast";
 import { signOut } from "next-auth/react";
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push("/auth/signin");
+    },
+  });
   const router = useRouter();
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
-
-  if (status === "loading") return <div>Loading...</div>;
-  if (!session) return null;
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
