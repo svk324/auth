@@ -10,7 +10,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const router = useRouter();
 
-  // Password strength: min 8 chars, 1 upper, 1 lower, 1 number, 1 special
+  // Password strength regex: min 8 chars, 1 upper, 1 lower, 1 number, 1 special
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
 
@@ -30,7 +30,7 @@ export default function ResetPassword() {
       return false;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error("New and confirm passwords must match");
       return false;
     }
     return true;
@@ -45,7 +45,7 @@ export default function ResetPassword() {
       const res = await fetch("/api/account/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       });
 
       if (res.ok) {

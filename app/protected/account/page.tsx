@@ -85,14 +85,14 @@ export default function AccountManagement() {
           </button>
           {!isOAuthUser && (
             <Link
-              href="/reset-password"
+              href="protected/account/reset-password"
               className="block w-full py-2 px-4 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-center"
             >
               Reset Password
             </Link>
           )}
           <Link
-            href="/delete-account"
+            href="protected/account/delete-account"
             className="block w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 text-center"
           >
             Delete Account

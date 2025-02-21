@@ -2,18 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 
 export default function DeleteAccount() {
+  const { data: session } = useSession();
   const [confirm, setConfirm] = useState("");
   const router = useRouter();
+
+  const username = session?.user?.username || "";
+  const expectedConfirmation = `DELETE ${username}`;
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (confirm !== "DELETE") {
-      toast.error("Please type 'DELETE' to confirm");
+    if (confirm !== expectedConfirmation) {
+      toast.error(`Please type "DELETE ${username}" to confirm`);
       return;
     }
 
@@ -43,12 +48,14 @@ export default function DeleteAccount() {
 
         <form onSubmit={handleDelete} className="space-y-4">
           <div>
-            <label className="block mb-1">Type 'DELETE' to confirm</label>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+              Type "DELETE {username}" to confirm
+            </label>
             <input
               type="text"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500"
               required
             />
           </div>

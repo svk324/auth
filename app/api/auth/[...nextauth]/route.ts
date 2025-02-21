@@ -13,6 +13,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        breakDeletion: { label: "Break Deletion", type: "hidden" }, // Optional field
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -33,6 +34,20 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = emailRecord.user;
+        const breakDeletion = credentials.breakDeletion === "true";
+
+        // Check for scheduled deletion
+        if (
+          user.deletionScheduledAt &&
+          new Date() < user.deletionScheduledAt &&
+          !breakDeletion
+        ) {
+          const daysLeft = Math.ceil(
+            (user.deletionScheduledAt.getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24)
+          );
+          throw new Error(`SCHEDULED_DELETION:${daysLeft}`);
+        }
 
         // Check lockout
         if (user.lockoutUntil && new Date() < user.lockoutUntil) {
@@ -52,29 +67,24 @@ export const authOptions: NextAuthOptions = {
           const now = new Date();
           const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
-          // Increment failed attempts if within 15 minutes
-          if (
-            user.lastFailedLogin &&
-            user.lastFailedLogin > fifteenMinutesAgo
-          ) {
-            user.failedLoginAttempts += 1;
-          } else {
-            user.failedLoginAttempts = 1; // Reset if outside window
-          }
+          const failedAttempts =
+            user.lastFailedLogin && user.lastFailedLogin > fifteenMinutesAgo
+              ? user.failedLoginAttempts + 1
+              : 1;
 
           await prisma.user.update({
             where: { id: user.id },
             data: {
-              failedLoginAttempts: user.failedLoginAttempts,
+              failedLoginAttempts: failedAttempts,
               lastFailedLogin: now,
               lockoutUntil:
-                user.failedLoginAttempts >= 5
+                failedAttempts >= 5
                   ? new Date(now.getTime() + 30 * 60 * 1000)
                   : null,
             },
           });
 
-          if (user.failedLoginAttempts >= 5) {
+          if (failedAttempts >= 5) {
             throw new Error(
               "Account locked due to too many failed attempts. Try again in 30 minutes"
             );
@@ -83,7 +93,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
-        // Reset lockout fields on successful login
+        // Reset lockout and deletion on successful login
         await prisma.user.update({
           where: { id: user.id },
           data: {
@@ -91,7 +101,7 @@ export const authOptions: NextAuthOptions = {
             lockoutUntil: null,
             lastFailedLogin: null,
             lastLoginAt: new Date(),
-            deletionScheduledAt: null,
+            deletionScheduledAt: null, // Always cancel deletion on successful login
           },
         });
 
