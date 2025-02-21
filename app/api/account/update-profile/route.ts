@@ -21,15 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = Number(session.user.id);
-    const isOAuthUser = session.user.emails.some(
-      (e) => e.provider !== "credentials"
+    const isCredentialsUser = session.user.emails.some(
+      (e) => e.provider === "credentials"
     );
 
-    // Verify current password only for credentials users
-    if (!isOAuthUser) {
+    if (isCredentialsUser) {
       if (!currentPassword) {
         return NextResponse.json(
-          { error: "Current password is required for credentials users" },
+          { error: "Current password is required" },
           { status: 400 }
         );
       }
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check for username uniqueness (excluding current user)
+    // Check username uniqueness
     const existingUsername = await prisma.user.findFirst({
       where: { username, id: { not: userId } },
     });
@@ -68,7 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for email uniqueness (excluding current user's email)
+    // Check email uniqueness
     const existingEmail = await prisma.email.findFirst({
       where: { email, userId: { not: userId } },
     });
@@ -87,7 +86,12 @@ export async function POST(request: NextRequest) {
 
     // Update email
     await prisma.email.updateMany({
-      where: { userId, provider: "credentials" },
+      where: {
+        userId,
+        provider: isCredentialsUser
+          ? "credentials"
+          : { in: ["google", "github"] },
+      },
       data: { email },
     });
 

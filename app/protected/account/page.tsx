@@ -27,10 +27,14 @@ export default function AccountManagement() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const body = session?.user.emails.some((e) => e.provider === "credentials")
+      ? { name, username, email, currentPassword }
+      : { name, username, email };
+
     const res = await fetch("/api/account/update-profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, username, email, currentPassword }),
+      body: JSON.stringify(body),
     });
 
     if (res.ok) {
@@ -143,18 +147,20 @@ export default function AccountManagement() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
+                {!isOAuthUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                )}
                 <div className="flex space-x-3">
                   <button
                     type="submit"
