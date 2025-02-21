@@ -6,7 +6,7 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions);
 
   // Example admin check
-  if (session?.user.email !== "admin@example.com") {
+  if (session?.user.email !== "vijay@sathram.in") {
     redirect("/protected");
   }
 
