@@ -1,5 +1,4 @@
 "use client";
-
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -29,6 +28,17 @@ export default function SignIn() {
         const daysLeft = parseInt(result.error.split(":")[1], 10);
         setDeletionDaysLeft(daysLeft);
         setIsDeletionModalOpen(true);
+      } else if (result.error.startsWith("Invalid credentials")) {
+        // Extract the remaining attempts from the error message
+        const match = result.error.match(/(\d+) attempts remaining/);
+        if (match) {
+          const remainingAttempts = match[1];
+          toast.error(
+            `Invalid credentials. ${remainingAttempts} attempts remaining.`
+          );
+        } else {
+          toast.error(result.error);
+        }
       } else {
         toast.error(result.error);
       }

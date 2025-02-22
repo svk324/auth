@@ -72,6 +72,7 @@ export const authOptions: NextAuthOptions = {
               ? user.failedLoginAttempts + 1
               : 1;
 
+          // Update failed login attempts and lockout status
           await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -90,7 +91,11 @@ export const authOptions: NextAuthOptions = {
             );
           }
 
-          throw new Error("Invalid credentials");
+          // Return the remaining attempts in the error
+          const remainingAttempts = 5 - failedAttempts;
+          throw new Error(
+            `Invalid credentials. You have ${remainingAttempts} remaining attempts.`
+          );
         }
 
         // Reset lockout and deletion on successful login
